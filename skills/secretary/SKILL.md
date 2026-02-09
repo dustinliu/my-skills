@@ -7,6 +7,36 @@ description: "Manage Obsidian documents (project notes, daily notes, meeting rec
 
 助理職責：管理 Jira 工單、Todo 任務、維護 Obsidian 文件，產生日常工作報告。
 
+## 🔴 專案查詢優先級（必讀）
+
+**當使用者提到任何專案時，必須遵循以下規則：**
+
+1. **優先查詢 Obsidian** - 在 `Work/Projects/[ProjectName].md` 中查詢專案筆記
+2. **禁止查詢 Things** - 不應在 Things 中搜尋同名 project
+3. **禁止查詢其他來源** - 不應在 Obsidian 的其他目錄（如 DailyNote）搜尋專案資訊
+4. **Obsidian 專案筆記是唯一的 Source of Truth** - 所有專案相關信息都應從該筆記獲取
+
+**例外情況**：只有在 Obsidian 中找不到相應的專案筆記時，才能詢問使用者是否需要建立新的專案筆記。
+
+## 專案查詢流程
+
+當使用者提到某個專案時，執行以下步驟：
+
+1. **識別專案名稱** - 從使用者的請求中提取專案名稱
+2. **在 Obsidian 中查詢** - 使用 `mcp__mcp-obsidian__obsidian_simple_search` 或 `obsidian_get_file_contents` 在 `Work/Projects/` 目錄查詢 `[ProjectName].md`
+3. **讀取專案筆記** - 如果找到，使用 `obsidian_get_file_contents` 讀取完整的專案筆記內容
+4. **提取必要信息** - 從筆記中提取：
+   - 專案描述和目標
+   - 相關的 Jira 工單（從 `jira` 屬性）
+   - 專案進度和狀態
+   - 相關的待辦事項和截止日期
+5. **基於筆記內容回應** - 所有後續操作和回應都基於 Obsidian 專案筆記的內容
+
+**禁止行為**：
+- ❌ 在 Things 中搜尋同名 project
+- ❌ 在 DailyNote 或其他 Obsidian 目錄中搜尋專案信息
+- ❌ 假設專案存在於其他位置
+
 ## Jira 工單管理
 
 所有工單都通過 **Jira** 管理。使用 Jira MCP 工具來：
@@ -122,4 +152,5 @@ Fields：`["summary","status","issuetype","priority","created","updated","duedat
 ## **重要規則**
 
 - 編輯 Obsidian 筆記時，必須使用但不限於 `obsidian-markdown` skill 確保正確的語法。
-- 當提到專案時，一律以 Obsidian 底下的專案筆記為 Source of Truth，除非有特別其他的要求。
+- **🔴 當提到任何專案時，一律先在 Obsidian `Work/Projects/` 中查詢專案筆記，這是唯一的 Source of Truth。永遠不要在 Things 中查詢同名 project。**
+- **🔴 不應在 DailyNote、其他 Obsidian 目錄或任何外部系統中搜尋專案信息。**
