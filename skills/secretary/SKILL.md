@@ -7,150 +7,166 @@ description: "Manage Obsidian documents (project notes, daily notes, meeting rec
 
 助理職責：管理 Jira 工單、Todo 任務、維護 Obsidian 文件，產生日常工作報告。
 
-## 🔴 專案查詢優先級（必讀）
+## 🔴 Mandatory Tool Selection Rules (CRITICAL)
 
-**當使用者提到任何專案時，必須遵循以下規則：**
+**ALL file operations must use Obsidian MCP tools. NO EXCEPTIONS.**
 
-1. **優先查詢 Obsidian** - 在 `Work/Projects/[ProjectName].md` 中查詢專案筆記
-2. **禁止查詢 Things** - 不應在 Things 中搜尋同名 project
-3. **禁止查詢其他來源** - 不應在 Obsidian 的其他目錄（如 DailyNote）搜尋專案資訊
-4. **Obsidian 專案筆記是唯一的 Source of Truth** - 所有專案相關信息都應從該筆記獲取
+- ❌ **NEVER** use `Write` tool for any file operation
+- ❌ **NEVER** use `Edit` tool for any file operation
+- ❌ **NEVER** use `Bash` for file I/O (`echo`, `cat`, `sed`, etc.)
+- ✅ **MUST** use Obsidian MCP tools: `obsidian_append_content`, `obsidian_patch_content`, `obsidian_get_file_contents`, `obsidian_simple_search`, `obsidian_complex_search`, `obsidian_delete_file`, `obsidian_get_periodic_note`
+- ✅ **SHOULD** use `obsidian-markdown` skill for complex formatting and frontmatter management
 
-**例外情況**：只有在 Obsidian 中找不到相應的專案筆記時，才能詢問使用者是否需要建立新的專案筆記。
+**Before any file operation:**
+1. Check target file path is in Obsidian vault (e.g., `Work/Projects/...`, `Work/Meetings/...`, `DailyNote/...`)
+2. Select appropriate Obsidian MCP tool from tool selection decision tree
+3. Execute operation
+4. Verify result using `obsidian_get_file_contents` or search tools
 
-## 專案查詢流程
+**Reference**: See `references/tool-selection.md` for complete decision tree and operation scenarios.
 
-當使用者提到某個專案時，執行以下步驟：
+---
 
-1. **識別專案名稱** - 從使用者的請求中提取專案名稱
-2. **在 Obsidian 中查詢** - 使用 `mcp__mcp-obsidian__obsidian_simple_search` 或 `obsidian_get_file_contents` 在 `Work/Projects/` 目錄查詢 `[ProjectName].md`
-3. **讀取專案筆記** - 如果找到，使用 `obsidian_get_file_contents` 讀取完整的專案筆記內容
-4. **提取必要信息** - 從筆記中提取：
-   - 專案描述和目標
-   - 相關的 Jira 工單（從 `jira` 屬性）
-   - 專案進度和狀態
-   - 相關的待辦事項和截止日期
-5. **基於筆記內容回應** - 所有後續操作和回應都基於 Obsidian 專案筆記的內容
+## 🔴 Project Query Rules (Required Reading)
 
-**禁止行為**：
-- ❌ 在 Things 中搜尋同名 project
-- ❌ 在 DailyNote 或其他 Obsidian 目錄中搜尋專案信息
-- ❌ 假設專案存在於其他位置
+**When user mentions any project, follow this hierarchy:**
 
-## Jira 工單管理
+1. **Query Obsidian first** — Search in `Work/Projects/[ProjectName].md` using `obsidian_simple_search` or `obsidian_get_file_contents`
+2. **Obsidian is source of truth** — All project information comes from this single location
+3. **Do NOT query Things** — Never search Things for same-named projects
+4. **Do NOT query other sources** — Never search DailyNote or other Obsidian directories for project info
 
-所有工單都通過 **Jira** 管理。使用 Jira MCP 工具來：
+**Exception**: If project note not found in Obsidian, ask user if they want to create one.
 
-- 搜尋和檢索議題
-- 建立新工單
-- 更新工單狀態和轉換
-- 新增評論和工時日誌
+**Prohibited queries**:
+- ❌ Searching Things for project with same name
+- ❌ Searching DailyNote for project information
+- ❌ Assuming project exists elsewhere
 
-## Todo 任務管理
+**Workflow**:
+1. Identify project name from user request
+2. Search `Work/Projects/` for matching project note
+3. Read project note with `obsidian_get_file_contents`
+4. Extract project description, Jira tickets, progress, deadlines
+5. Base all responses on project note content
 
-所有待辦事項都通過 **Things MCP** 管理。使用 Things MCP 工具來：
+---
 
-- 檢索現有任務
-- 建立新任務到收件匣
-- 更新任務狀態
-- 按專案和區域組織（`get_projects`、`get_areas`, `get_anytime`）
+## File Organization
 
-## Obsidian 文件管理
+### Project Notes
+- **Path**: `Work/Projects/[ProjectName].md`
+- **Template**: `assets/project.md`
+- **Frontmatter fields**: `jira` (ticket key), `space` (Jira project code), `created`, `updated`
+- **Purpose**: Project overview, goals, progress tracking, related Jira tickets
 
-所有文件都通過 **Obsidian** 維護。支援的文件類型：
+### Meeting Records
+- **Path**: `Work/Meetings/YYYY/MM/[meeting title].md`
+- **Template**: `assets/meeting.md`
+- **Frontmatter**: `title`, `date`, `attendees`, `project`, `status` (Draft/Reviewed), `tags`
+- **Sections**: Meeting Info, Background, Discussion, Decisions, Action Items, Follow-up
 
-### 專案筆記
-- **位置**：`Work/Projects/[ProjectName].md`
-- **範本**：`assets/project.md`
-- **屬性**：`jira`（工單鍵值）、`space`（Jira 專案碼）、`created`、`updated`
-- **用途**：追蹤專案概況、進度和相關筆記
+### Daily Notes
+- **Access**: Use `obsidian_get_periodic_note(period="daily")`
+- **Path**: `DailyNote/YYYY/MM/YYYY-MM-DD.md` (Obsidian-managed)
+- **Purpose**: Daily work log, progress, thoughts
 
-### 每日筆記
-- **位置**：`DailyNote/YYYY/MM/YYYY-MM-DD.md`
-- **取得方法**：`mcp__mcp-obsidian__obsidian_get_periodic_note` with `period: "daily"`
-- **用途**：記錄每日工作、進度和想法
+---
 
-### 會議記錄
-- **位置**：`Work/Meetings/YYYY/MM/[meeting title].md`
-- **範本**：`assets/meeting.md`
-- **屬性**：
-  - `title` — 會議標題
-  - `date` — 會議日期
-  - `attendees` — 參與人員列表
-  - `project` — 相關專案
-  - `status` — 狀態 (`Draft` 或 `Reviewed`)
-  - `tags` — 標籤（如 `meeting`、`project:ProjectName`）
-- **包含**：背景、討論、決策、行動項目、後續追蹤
-- **用途**：記錄會議重點、決策和責任分配
+## Workflows
 
-#### 會議記錄工作流程
+### Creating Files
 
-建立或編輯會議記錄時：
+Use `obsidian-markdown` skill when creating new project or meeting notes:
+1. Collect required information from user (project name, meeting date, attendees, etc.)
+2. Load appropriate template (`assets/project.md` or `assets/meeting.md`)
+3. Use `obsidian-markdown` skill to create file with proper formatting
+4. Verify file created in correct Obsidian location using `obsidian_get_file_contents`
 
-1. **收集資訊**：詢問使用者會議相關信息（日期、參與者、專案、主題）
-2. **建立或更新文件**：使用範本建立新筆記（預設 `status: Draft`），或更新現有筆記
-3. **建議標籤**：根據會議內容建議標籤（例如 `project:ProjectName`、`type:planning`）
-4. **驗證行動項目**：確認所有行動項目有明確的責任人和截止日期
-5. **更新狀態**：
-   - **Draft** — 初始建立後的狀態，表示筆記還在編輯中
-   - **Reviewed** — 會議內容已確認和審核，可供參考
+**Do NOT use Write tool** — Use Obsidian MCP tools exclusively.
 
-**編輯所有 Obsidian 文件時，始終使用 `obsidian-markdown` skill 確保正確的語法。**
+### Updating Files
 
-## 產生每日報告（可選）
+When updating existing Obsidian files:
+1. Read current file: `obsidian_get_file_contents`
+2. Determine update location (specific heading, field, section)
+3. Use `obsidian_patch_content` for targeted updates OR `obsidian_append_content` for appends
+4. For formatting/complex edits, use `obsidian-markdown` skill
+5. Verify changes: read file again with `obsidian_get_file_contents`
 
-**只有在使用者明確要求時，才執行此工作流程。** 例如："Generate today's daily report" 或 "Create a daily report"。
+### Finding Files
 
-### 每日報告工作流程
+Use search tools to locate files when path is unknown:
+- `obsidian_simple_search` — Fast text search (e.g., `"project:MyProject"`)
+- `obsidian_complex_search` — Advanced pattern matching when needed
+- `obsidian_get_periodic_note` — Access periodic notes directly
 
-按序依次完成以下步驟，每個步驟完成後等待使用者確認：
+---
 
-#### 第一步：檢視未結 Jira 工單
+## Jira Ticket Management
 
-使用 `mcp__atlassian__searchJiraIssuesUsingJql` 搭配 JQL：
-```
-assignee = currentUser() AND statusCategory not in (Done) ORDER BY updated DESC
-```
+All tickets managed through **Jira MCP** tools:
+- Search and retrieve issues
+- Create new tickets
+- Update ticket status and transitions
+- Add comments and time logs
+- Link to project notes (store Jira key in project frontmatter: `jira: "PROJ-123"`)
 
-Fields：`["summary","status","issuetype","priority","created","updated","duedate","project"]`，maxResults：`50`
+---
 
-展示工單列表供使用者 review、更新工單狀態或備註。
+## Todo Task Management
 
-#### 第二步：檢視今日待辦清單
+All tasks managed through **Things MCP** tools:
+- Retrieve existing tasks
+- Create new tasks in inbox
+- Update task status
+- Organize by project and area
 
-使用 `mcp__things__get_today` 檢索今日應完成的任務。
+---
 
-展示任務列表並請使用者 review、完成或更新任務狀態。
+## Generating Daily Reports
 
-#### 第三步：檢視 Obsidian 每日筆記
+**Only execute when user explicitly requests**: "Generate daily report", "Create today's report", etc.
 
-使用 `mcp__mcp-obsidian__obsidian_get_periodic_note` 並設定 `period: "daily"` 來檢索今日筆記。
+Follow this sequence (wait for user confirmation between steps):
 
-根據筆記內容協助整理或更新。
+1. **Review open Jira tickets** — Use JQL: `assignee = currentUser() AND statusCategory not in (Done) ORDER BY updated DESC`
+   - Display with fields: summary, status, priority, due date
+2. **Review today's todos** — Use `get_today` from Things
+   - Display task list for user review
+3. **Review daily note** — Use `obsidian_get_periodic_note(period="daily")`
+   - Display current note content
+4. **Generate report** — Compile structured markdown:
+   ```markdown
+   # Daily Report - YYYY-MM-DD
 
-#### 第四步：產生每日報告
+   ## Open Jira Tickets
+   | Key | Summary | Status | Priority | Due |
+   |-----|---------|--------|----------|-----|
 
-根據 Jira 工單、Todo 任務和 Obsidian 筆記，產生結構化的日報：
+   ## Today's Todos
+   | Task | Notes | Project |
+   |------|-------|---------|
 
-```markdown
-# 每日報告 - {date}
+   ## Daily Notes
+   [summarized note content]
+   ```
+5. **Append to daily note** — Add report using `obsidian_append_content`
 
-## Jira 工單
-| 鍵值 | 摘要 | 狀態 | 優先度 | 截止日期 |
-|-----|------|------|--------|---------|
-| {ticket data} |
+---
 
-## 今日任務
-| 任務 | 備註 | 專案/區域 |
-|------|------|---------|
-| 標題 | 備註摘要 | 專案或區域 |
+## Important Implementation Notes
 
-## Obsidian 筆記
-{每日筆記的摘要內容，如可用}
-```
+- **Always use Obsidian MCP tools** for any file operation (see tool selection decision tree in `references/tool-selection.md`)
+- **Use obsidian-markdown skill** when creating files with special formatting or complex frontmatter
+- **Project notes are source of truth** — Query Obsidian first, never assume project exists elsewhere
+- **Verify operations** — Always confirm file created/updated correctly by reading back content
+- **No local file paths** — All paths must be relative to Obsidian vault root
 
-## **重要規則**
+---
 
-- 編輯 Obsidian 筆記時，必須使用但不限於 `obsidian-markdown` skill 確保正確的語法。
-- **🔴 當提到任何專案時，一律先在 Obsidian `Work/Projects/` 中查詢專案筆記，這是唯一的 Source of Truth。永遠不要在 Things 中查詢同名 project。**
-- **🔴 不應在 DailyNote、其他 Obsidian 目錄或任何外部系統中搜尋專案信息。**
+## Reference Guides
+
+For detailed implementation guidance, see:
+- **`references/tool-selection.md`** — Decision tree for selecting correct tool per operation type
+- **`references/obsidian-operations.md`** — Complete reference for all Obsidian MCP tools with examples and best practices
