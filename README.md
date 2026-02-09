@@ -1,11 +1,12 @@
 # my-skills
 
-這是一個用來管理和修改個人 agent 的 skill 的專案。
+This is a project for managing and modifying personal agent skills.
 
-## 結構
+## Structure
 
-所有修改的 skill 都位於 `skills/` 資料夾中。每個 skill 為一個獨立的目錄，包含相關的代碼和配置文件。
+All modified skills are located in the `skills/` folder. Each skill is an independent directory containing relevant code and configuration files.
 
-## 使用方式
+## Usage
 
-在 `skills/` 資料夾中添加或修改你的 skill，這些 skill 可以擴展 Claude Code 的功能並提供專門的工作流程。
+- Add or modify your skills in the `skills/` folder. These skills can extend Claude Code functionality and provide specialized workflows.
+- Always use skill-creator to create new skills, and use skill-editor to edit existing skills.

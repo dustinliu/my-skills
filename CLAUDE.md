@@ -1,6 +1,6 @@
-# my-skills 專案指示
+# my-skills Project Instructions
 
-## 🔴 優先事項：必讀順序
+## 🔴 Priority: Required Reading Order
 
-1. **FIRST: 讀取 README.md** - 了解專案結構和目的
-2. 然後執行使用者的請求
+1. **FIRST: Read README.md** - Understand the project structure and purpose
+2. Then execute the user's request
